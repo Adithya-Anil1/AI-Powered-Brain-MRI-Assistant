@@ -1,234 +1,259 @@
-# AI-Powered Brain MRI Assistant
+# AI-Powered Brain MRI Assistant - MVP Setup Guide
 
-This project implements brain tumor segmentation using nnU-Net on the BraTS 2024 dataset.
+## 🎯 Project Overview
 
-## Overview
+This is an **AI-assisted diagnostic system** for brain tumor segmentation using pretrained nnU-Net models. The system analyzes multi-modal MRI scans (T1, T1CE, T2, FLAIR) and automatically identifies tumor regions to assist radiologists in diagnosis.
 
-nnU-Net (no-new-Net) is a self-configuring deep learning framework for medical image segmentation. This implementation is specifically configured for brain tumor segmentation on BraTS 2024 data, which includes multi-modal MRI scans (T1, T1CE, T2, FLAIR).
+### What This MVP Does:
+✅ Loads a **pretrained nnU-Net model** (no training required)  
+✅ Segments brain tumors into 3 regions: NCR, ED, ET  
+✅ Calculates tumor volumes automatically  
+✅ Generates **visual overlays** showing segmentation results  
+✅ Provides structured output for integration into reports  
 
-### Segmentation Labels
-- **Label 0**: Background
-- **Label 1**: NCR (Necrotic tumor core)
-- **Label 2**: ED (Peritumoral edematous/invaded tissue)
-- **Label 3**: ET (Enhancing tumor)
+### Tumor Segmentation Labels:
+- **NCR (Label 1)**: Necrotic/Non-enhancing Tumor Core
+- **ED (Label 2)**: Peritumoral Edema
+- **ET (Label 3)**: Enhancing Tumor
 
-### Composite Regions
-- **Whole Tumor (WT)**: NCR + ED + ET
-- **Tumor Core (TC)**: NCR + ET
-- **Enhancing Tumor (ET)**: Label 3
+### Clinical Metrics:
+- **Whole Tumor (WT)**: NCR + ED + ET (all tumor regions)
+- **Tumor Core (TC)**: NCR + ET (solid tumor parts)
+- **Enhancing Tumor (ET)**: Active tumor region
 
-## Project Structure
+---
+
+## 📁 Project Files
 
 ```
 AI-Powered Brain MRI Assistant/
-├── setup_nnunet.py           # Initial setup and directory creation
-├── convert_brats_data.py     # Convert BraTS data to nnU-Net format
-├── train_nnunet.py           # Training script
-├── inference_nnunet.py       # Inference and visualization
-├── requirements.txt          # Python dependencies
-├── nnUNet_raw/              # Raw dataset (created by setup)
-│   └── Dataset001_BraTS2024/
-│       ├── imagesTr/        # Training images
-│       ├── labelsTr/        # Training labels
-│       ├── imagesTs/        # Test images
-│       └── dataset.json     # Dataset configuration
-├── nnUNet_preprocessed/     # Preprocessed data (created during training)
-└── nnUNet_results/          # Model checkpoints and results
+├── requirements.txt              # Python dependencies
+├── setup_nnunet.py              # Creates directory structure
+├── download_pretrained_model.py # Downloads pretrained nnU-Net
+├── inference_nnunet.py          # Runs segmentation & visualization
+├── validate_setup.py            # Checks if setup is correct
+└── README.md                    # This file
 ```
 
-## Installation
+---
 
-### 1. Install Python Dependencies
+## 🚀 Complete Setup Guide
 
-```bash
+### **Step 1: Install Python Packages** (10-15 minutes)
+
+Create a virtual environment (recommended):
+```cmd
+python -m venv venv
+venv\Scripts\activate
+```
+
+Install dependencies:
+```cmd
 pip install -r requirements.txt
 ```
 
-### 2. Setup nnU-Net Directories
+**What gets installed:**
+- `nnunetv2` - The segmentation framework
+- `torch` - Deep learning engine
+- `SimpleITK` - Medical image processing
+- `matplotlib` - Visualization
+- `numpy`, `scipy` - Numerical processing
 
-```bash
+---
+
+### **Step 2: Setup Directories** (1 minute)
+
+Run the setup script:
+```cmd
 python setup_nnunet.py
 ```
 
-This will:
-- Create the required directory structure
-- Set up environment variables
-- Create the dataset.json configuration file
+**What this does:**
+- Creates `nnUNet_raw/` folder
+- Creates `nnUNet_preprocessed/` folder  
+- Creates `nnUNet_results/` folder
+- Sets environment variables automatically
 
-## Data Preparation
+---
 
-### 1. Download BraTS 2024 Dataset
+### **Step 3: Download Pretrained Model** (5-10 minutes)
 
-Download the BraTS 2024 dataset from the official source:
-https://www.synapse.org/#!Synapse:syn53708249/wiki/
-
-### 2. Convert Data to nnU-Net Format
-
-```bash
-python convert_brats_data.py --brats_path "path/to/BraTS2024" --nnunet_raw "./nnUNet_raw"
+Run the download script:
+```cmd
+python download_pretrained_model.py
 ```
 
-This script will:
-- Convert BraTS naming convention to nnU-Net format
-- Copy all 4 modalities (T1, T1CE, T2, FLAIR) for each case
-- Copy segmentation masks
-- Update dataset.json with the number of training cases
+**What this does:**
+- Downloads a pretrained nnU-Net model trained on BraTS data
+- Places it in `nnUNet_results/`
+- Model is ready to use immediately (no training needed!)
 
-### Expected BraTS Data Structure
+**Model source:** You can use models from:
+- [nnU-Net Model Zoo](https://github.com/MIC-DKFZ/nnUNet/blob/master/documentation/model_zoo.md)
+- [BraTS pretrained models](https://zenodo.org/communities/brats)
 
-```
-BraTS2024/
-├── BraTS-GLI-00000-000/
-│   ├── BraTS-GLI-00000-000-t1n.nii.gz
-│   ├── BraTS-GLI-00000-000-t1c.nii.gz
-│   ├── BraTS-GLI-00000-000-t2w.nii.gz
-│   ├── BraTS-GLI-00000-000-t2f.nii.gz
-│   └── BraTS-GLI-00000-000-seg.nii.gz
-├── BraTS-GLI-00001-001/
-│   └── ...
-└── ...
+---
+
+### **Step 4: Validate Setup** (1 minute)
+
+Check if everything is configured correctly:
+```cmd
+python validate_setup.py
 ```
 
-## Training
-
-### 1. Preprocessing
-
-First, run preprocessing and planning:
-
-```bash
-python train_nnunet.py --mode preprocess --dataset_id 1
+**Expected output:**
+```
+✓ Directories: PASS
+✓ Dataset JSON: PASS  
+✓ Python Packages: PASS
+✓ CUDA: PASS
+✓ All checks passed!
 ```
 
-Or use the nnU-Net command directly:
+---
 
-```bash
-nnUNetv2_plan_and_preprocess -d 001 --verify_dataset_integrity
+## 🧠 Running Segmentation
+
+### **Single Patient MRI Scan**
+
+```cmd
+python inference_nnunet.py ^
+    --t1 "path\to\patient_t1.nii.gz" ^
+    --t1ce "path\to\patient_t1ce.nii.gz" ^
+    --t2 "path\to\patient_t2.nii.gz" ^
+    --flair "path\to\patient_flair.nii.gz" ^
+    --output "segmentation_result.nii.gz" ^
+    --visualize ^
+    --plot_output "visualization.png"
 ```
 
-### 2. Train the Model
+**What you get:**
+1. `segmentation_result.nii.gz` - 3D segmentation mask
+2. `visualization.png` - Visual overlay showing tumor regions
+3. Console output with tumor volumes
 
-Train using the automated script:
+**Example output:**
+```
+✓ Segmentation saved to: segmentation_result.nii.gz
 
-```bash
-python train_nnunet.py --mode train --dataset_id 1 --config 3d_fullres --fold 0 --gpu 0
+Tumor volumes:
+  Whole Tumor (WT): 45823.45 mm³
+  Tumor Core (TC): 23451.23 mm³
+  Enhancing Tumor (ET): 12345.67 mm³
+  Necrotic Core (NCR): 11105.56 mm³
+  Edema (ED): 22372.22 mm³
 ```
 
-Or use nnU-Net commands directly:
+---
 
-```bash
-# Train a single fold
-nnUNetv2_train 001 3d_fullres 0
+## 📊 Understanding the Output
 
-# Train all folds (5-fold cross-validation)
-nnUNetv2_train 001 3d_fullres all
-```
+### **1. Segmentation Mask** (`segmentation_result.nii.gz`)
+- 3D NIfTI file with the same dimensions as input
+- Each voxel labeled: 0 (background), 1 (NCR), 2 (ED), 3 (ET)
+- Can be loaded in medical imaging software (3D Slicer, ITK-SNAP)
 
-### Configuration Options
+### **2. Visualization** (`visualization.png`)
+Three panels:
+- **Left:** Original T1CE MRI slice
+- **Middle:** Segmentation mask (color-coded)
+- **Right:** Overlay (mask on top of MRI)
 
-- **2d**: 2D U-Net
-- **3d_fullres**: 3D U-Net at full resolution (recommended for BraTS)
-- **3d_lowres**: 3D U-Net at lower resolution
-- **3d_cascade_fullres**: Cascade of low-res and full-res (for very high-resolution data)
+Color coding:
+- 🔵 Blue = NCR (Necrotic core)
+- 🟢 Green = ED (Edema)
+- 🔴 Red = ET (Enhancing tumor)
 
-### Training Tips
+### **3. Volume Measurements**
+Printed to console and can be saved to file for report generation
 
-- Training on BraTS data typically takes 24-48 hours on a modern GPU (RTX 3090/4090)
-- The 3d_fullres configuration is recommended for BraTS
-- Use all 5 folds for best performance, then ensemble predictions
-- Monitor training with TensorBoard logs in nnUNet_results
+---
 
-## Inference
+## 🔧 Customization for Your Diagnostic Assistant
 
-### Single Case Prediction
+### **Integration Ideas:**
 
-```bash
-python inference_nnunet.py \
-    --t1 "path/to/t1.nii.gz" \
-    --t1ce "path/to/t1ce.nii.gz" \
-    --t2 "path/to/t2.nii.gz" \
-    --flair "path/to/flair.nii.gz" \
-    --output "path/to/output_seg.nii.gz" \
-    --visualize \
-    --plot_output "path/to/visualization.png"
-```
+1. **Automated Report Generation:**
+   - Parse the volume output from `inference_nnunet.py`
+   - Generate structured reports using templates
+   - Include visualizations in PDF reports
 
-### Batch Prediction
+2. **Batch Processing:**
+   - Modify script to process multiple patients
+   - Store results in database
+   - Generate comparison reports
 
-```bash
-python train_nnunet.py --mode predict \
-    --input_folder "path/to/test/images" \
-    --output_folder "path/to/predictions" \
-    --dataset_id 1 \
-    --config 3d_fullres \
-    --fold 0
-```
+3. **Quality Control:**
+   - Visual review of segmentations
+   - Flag cases with unusual volumes
+   - Export for radiologist confirmation
 
-Or use nnU-Net command:
+---
 
-```bash
-nnUNetv2_predict -i INPUT_FOLDER -o OUTPUT_FOLDER -d 001 -c 3d_fullres -f 0
-```
+## ⚙️ System Requirements
 
-### Ensemble Prediction (Best Performance)
+### **Minimum (for testing):**
+- GPU: NVIDIA GTX 1060 (6GB VRAM)
+- RAM: 8GB
+- Storage: 20GB free space
+- OS: Windows 10/11
 
-To get the best results, ensemble predictions from all 5 folds:
+### **Recommended (for clinical use):**
+- GPU: NVIDIA RTX 3060/4060 (12GB+ VRAM)
+- RAM: 16GB+
+- Storage: 50GB SSD
+- OS: Windows 10/11 with latest updates
 
-```bash
-nnUNetv2_predict -i INPUT_FOLDER -o OUTPUT_FOLDER -d 001 -c 3d_fullres -f all
-```
+### **Inference Speed:**
+- ~30-60 seconds per patient (with GPU)
+- ~5-10 minutes per patient (CPU only)
 
-## Evaluation
+---
 
-Evaluate predictions against ground truth:
+## 🐛 Troubleshooting
 
-```bash
-nnUNetv2_evaluate_folder GT_FOLDER PREDICTION_FOLDER -djfile nnUNet_raw/Dataset001_BraTS2024/dataset.json
-```
+### **"CUDA out of memory"**
+**Solution:** Close other GPU programs, or use CPU mode by editing `inference_nnunet.py` (change `device='cuda'` to `device='cpu'`)
 
-## Model Performance
+### **"Module 'nnunetv2' not found"**
+**Solution:** Reinstall: `pip install --upgrade nnunetv2`
 
-nnU-Net typically achieves state-of-the-art performance on BraTS:
-- **Whole Tumor (WT) Dice**: ~90-92%
-- **Tumor Core (TC) Dice**: ~85-88%
-- **Enhancing Tumor (ET) Dice**: ~80-85%
+### **"Environment variables not set"**
+**Solution:** The scripts set them automatically. If issues persist, run `setup_nnunet.py` again
 
-## Environment Variables
+### **Visualization doesn't show**
+**Solution:** Install matplotlib backend: `pip install PyQt5` or check `--plot_output` path
 
-The following environment variables are automatically set by the scripts:
+---
 
-```python
-nnUNet_raw = "c:/Users/adith/OneDrive/Desktop/AI-Powered Brain MRI Assistant/nnUNet_raw"
-nnUNet_preprocessed = "c:/Users/adith/OneDrive/Desktop/AI-Powered Brain MRI Assistant/nnUNet_preprocessed"
-nnUNet_results = "c:/Users/adith/OneDrive/Desktop/AI-Powered Brain MRI Assistant/nnUNet_results"
-```
+## 📈 Next Steps for Full Diagnostic System
 
-## Hardware Requirements
+1. **Report Generation Module**
+   - Template-based reporting from segmentation output
+   - Integration with PACS systems
+   - PDF export functionality
 
-- **GPU**: NVIDIA GPU with at least 8GB VRAM (16GB+ recommended)
-- **RAM**: 32GB+ recommended
-- **Storage**: 100GB+ free space for dataset and results
-- **CUDA**: Version 11.0 or higher
+2. **Treatment Recommendation**
+   - CNN classifier for therapy path prediction
+   - Based on tumor characteristics and volumes
 
-## Troubleshooting
+3. **Web Interface** (later phase)
+   - Upload MRI scans
+   - View segmentation results
+   - Edit/confirm outputs
+   - Generate final reports
 
-### CUDA Out of Memory
-- Reduce batch size in nnUNetTrainerV2 (modify plans file)
-- Use 3d_lowres configuration
-- Use a GPU with more VRAM
+---
 
-### Dataset Integrity Errors
-- Verify all images have the same spacing and orientation
-- Check that all 4 modalities exist for each case
-- Ensure file naming follows nnU-Net convention exactly
+## 📚 References
 
-### Training Crashes
-- Check GPU drivers and CUDA installation
-- Verify sufficient disk space
-- Monitor GPU temperature and usage
+- **nnU-Net Paper:** [Nature Methods 2021](https://www.nature.com/articles/s41592-020-01008-z)
+- **nnU-Net GitHub:** https://github.com/MIC-DKFZ/nnUNet
+- **BraTS Challenge:** https://www.synapse.org/brats
 
-## Citation
+---
 
-If you use this code, please cite:
+## 📝 Citation
 
 ```bibtex
 @article{isensee2021nnunet,
@@ -238,17 +263,19 @@ If you use this code, please cite:
   volume={18},
   number={2},
   pages={203--211},
-  year={2021},
-  publisher={Nature Publishing Group}
+  year={2021}
 }
 ```
 
-## References
+---
 
-- [nnU-Net GitHub](https://github.com/MIC-DKFZ/nnUNet)
-- [BraTS 2024 Challenge](https://www.synapse.org/#!Synapse:syn53708249/wiki/)
-- [nnU-Net Documentation](https://github.com/MIC-DKFZ/nnUNet/blob/master/documentation/how_to_use_nnunet.md)
+## 🎓 Support
 
-## License
+For questions or issues:
+1. Check this README first
+2. Run `validate_setup.py` to diagnose problems
+3. Check [nnU-Net documentation](https://github.com/MIC-DKFZ/nnUNet/tree/master/documentation)
 
-This project uses nnU-Net, which is licensed under Apache License 2.0.
+---
+
+**Ready to start? Run:** `python setup_nnunet.py` 🚀
