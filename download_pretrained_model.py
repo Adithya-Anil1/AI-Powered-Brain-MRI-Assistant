@@ -26,7 +26,7 @@ def setup_environment():
     os.environ['nnUNet_preprocessed'] = str(nnunet_preprocessed)
     os.environ['nnUNet_results'] = str(nnunet_results)
     
-    print("✓ nnU-Net directories created:")
+    print("[OK] nnU-Net directories created:")
     print(f"  nnUNet_raw: {nnunet_raw}")
     print(f"  nnUNet_preprocessed: {nnunet_preprocessed}")
     print(f"  nnUNet_results: {nnunet_results}")
@@ -102,7 +102,7 @@ def download_pretrained_brats_model():
     model_dir = project_dir / "nnUNet_results" / "Dataset001_BraTS2024"
     model_dir.mkdir(parents=True, exist_ok=True)
     
-    print(f"\n✓ Model directory created: {model_dir}")
+    print(f"\n[OK] Model directory created: {model_dir}")
     print("\nPlace your pretrained model files here following nnU-Net structure:")
     print("  Dataset001_BraTS2024/")
     print("    └── nnUNetTrainer__nnUNetPlans__3d_fullres/")
@@ -181,7 +181,7 @@ def run_segmentation(input_folder, output_folder):
         overwrite=True
     )
     
-    print(f"✓ Segmentation complete! Results saved to: {output_folder}")
+    print(f"[OK] Segmentation complete! Results saved to: {output_folder}")
 
 
 if __name__ == "__main__":
@@ -194,10 +194,10 @@ if __name__ == "__main__":
     run_segmentation(args.input, args.output)
 '''
     
-    with open(helper_script, 'w') as f:
+    with open(helper_script, 'w', encoding='utf-8') as f:
         f.write(script_content)
     
-    print(f"\n✓ Created inference helper: {helper_script}")
+    print(f"\nCreated inference helper: {helper_script}")
     print("\nUsage:")
     print("  python run_inference.py --input patient_scans/ --output results/")
 

@@ -15,7 +15,7 @@
     "file_creation": "You may create new files if needed, but do not create multiple or duplicate files unnecessarily. Only create files explicitly requested or clearly required.",
     "coding": "Keep code modular, well-commented, follow naming conventions, avoid unnecessary boilerplate",
     "preprocessing": "Normalize, resize, augment MRI scans",
-    "outputs": "Follow clinical standards (RSNA templates, DICOM compliant)"
+    "outputs": "Generate readable, structured reports (JSON, Markdown, or tables). No need for strict clinical standards."
   },
   "libraries": ["PyTorch", "TensorFlow", "HuggingFace", "Nibabel"]
 }

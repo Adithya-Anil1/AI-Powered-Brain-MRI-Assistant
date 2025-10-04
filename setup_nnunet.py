@@ -100,8 +100,8 @@ if __name__ == "__main__":
     
     print("\n" + "=" * 60)
     print("Setup complete!")
-    print("\nNext steps:")
-    print("1. Place your BraTS 2024 data in the appropriate folders")
-    print("2. Run the data conversion script: python convert_brats_data.py")
-    print("3. Plan and preprocess: nnUNetv2_plan_and_preprocess -d 001")
-    print("4. Train the model: nnUNetv2_train DATASET_ID CONFIGURATION FOLD")
+    print("\nNext steps for PRETRAINED MODEL setup:")
+    print("1. Install dependencies: pip install -r requirements.txt")
+    print("2. Download pretrained model: python download_pretrained_model.py")
+    print("3. Run inference on patient MRI: python inference_nnunet.py --help")
+    print("\nYour segmentation MVP is ready to use!")

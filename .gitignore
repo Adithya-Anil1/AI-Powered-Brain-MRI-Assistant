@@ -1,0 +1,252 @@
+# ============================================================================
+# AI-Powered Brain MRI Assistant - .gitignore
+# ============================================================================
+
+# ============================================================================
+# LARGE MODEL FILES & DATA (DO NOT COMMIT TO GIT!)
+# ============================================================================
+
+# nnU-Net directories (contains large model weights and preprocessed data)
+nnUNet_raw/
+nnUNet_preprocessed/
+nnUNet_results/
+
+# Downloaded models and datasets
+downloads/
+*.zip
+*.tar.gz
+*.pth
+*.pt
+*.model
+*.h5
+*.hdf5
+
+# BraTS KAIST repository (already on GitHub)
+Brats21_KAIST_MRI_Lab/
+
+# Medical image files (can be very large)
+*.nii
+*.nii.gz
+*.dcm
+*.dicom
+*.mha
+*.mhd
+*.nrrd
+
+# ============================================================================
+# PYTHON
+# ============================================================================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# IPython
+profile_default/
+ipython_config.py
+
+# ============================================================================
+# MACHINE LEARNING & DATA SCIENCE
+# ============================================================================
+
+# TensorBoard logs
+logs/
+runs/
+tensorboard/
+
+# Weights & Biases
+wandb/
+
+# MLflow
+mlruns/
+
+# Jupyter
+*.ipynb_checkpoints/
+
+# Training outputs
+checkpoints/
+saved_models/
+experiments/
+results/
+outputs/
+
+# Data cache
+*.pkl
+*.pickle
+*.npy
+*.npz
+*.mat
+
+# ============================================================================
+# WEB DEVELOPMENT (Flask/React)
+# ============================================================================
+
+# Flask
+instance/
+.webassets-cache
+
+# React / Node.js (when you add web interface)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp/
+.pnp.js
+
+# Production build
+/build
+/dist
+
+# ============================================================================
+# ENVIRONMENT & CONFIGURATION
+# ============================================================================
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE settings
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS specific
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ============================================================================
+# TEMPORARY & OUTPUT FILES
+# ============================================================================
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+*.bak
+
+# Output files from inference
+segmentations/
+predictions/
+visualizations/
+*.png
+*.jpg
+*.jpeg
+*.pdf
+
+# Extracted archives
+extracted/
+
+# ============================================================================
+# CREDENTIALS & SENSITIVE DATA
+# ============================================================================
+
+# API keys and secrets
+secrets.json
+credentials.json
+*.key
+*.pem
+
+# Patient data (HIPAA compliance - never commit patient data!)
+patient_data/
+patient_scans/
+clinical_data/
+
+# ============================================================================
+# DOCUMENTATION BUILD
+# ============================================================================
+
+# Sphinx documentation
+docs/_build/
+docs/_static/
+docs/_templates/
+
+# ============================================================================
+# CUSTOM PROJECT SPECIFIC
+# ============================================================================
+
+# Sample data folder (if you create one)
+samples/
+demo_data/
+
+# Reports output
+reports/
+generated_reports/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Cache directories
+.cache/
+__pypackages__/
+
+# ============================================================================
+# EXCEPTIONS (Files TO COMMIT)
+# ============================================================================
+
+# Keep these files even if matched above
+!.gitignore
+!README.md
+!requirements.txt
+!setup_nnunet.py
+!inference_nnunet.py
+!validate_setup.py
+!download_brats2021_weights.py
+!setup_brats2021_model.py
+
+# Keep example/documentation images
+!docs/images/*.png
+!docs/images/*.jpg
