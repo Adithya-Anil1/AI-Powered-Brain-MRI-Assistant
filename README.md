@@ -1,4 +1,3 @@
-# AI-Powered Brain MRI Assistant - MVP Setup Guide
 
 ## 🎯 Project Overview
 
@@ -169,8 +168,6 @@ Printed to console and can be saved to file for report generation
 
 ---
 
-## 🔧 Customization for Your Diagnostic Assistant
-
 ### **Integration Ideas:**
 
 1. **Automated Report Generation:**
@@ -208,42 +205,6 @@ Printed to console and can be saved to file for report generation
 - ~30-60 seconds per patient (with GPU)
 - ~5-10 minutes per patient (CPU only)
 
----
-
-## 🐛 Troubleshooting
-
-### **"CUDA out of memory"**
-**Solution:** Close other GPU programs, or use CPU mode by editing `inference_nnunet.py` (change `device='cuda'` to `device='cpu'`)
-
-### **"Module 'nnunetv2' not found"**
-**Solution:** Reinstall: `pip install --upgrade nnunetv2`
-
-### **"Environment variables not set"**
-**Solution:** The scripts set them automatically. If issues persist, run `setup_nnunet.py` again
-
-### **Visualization doesn't show**
-**Solution:** Install matplotlib backend: `pip install PyQt5` or check `--plot_output` path
-
----
-
-## 📈 Next Steps for Full Diagnostic System
-
-1. **Report Generation Module**
-   - Template-based reporting from segmentation output
-   - Integration with PACS systems
-   - PDF export functionality
-
-2. **Treatment Recommendation**
-   - CNN classifier for therapy path prediction
-   - Based on tumor characteristics and volumes
-
-3. **Web Interface** (later phase)
-   - Upload MRI scans
-   - View segmentation results
-   - Edit/confirm outputs
-   - Generate final reports
-
----
 
 ## 📚 References
 
@@ -253,29 +214,5 @@ Printed to console and can be saved to file for report generation
 
 ---
 
-## 📝 Citation
 
-```bibtex
-@article{isensee2021nnunet,
-  title={nnU-Net: a self-configuring method for deep learning-based biomedical image segmentation},
-  author={Isensee, Fabian and Jaeger, Paul F and Kohl, Simon AA and Petersen, Jens and Maier-Hein, Klaus H},
-  journal={Nature methods},
-  volume={18},
-  number={2},
-  pages={203--211},
-  year={2021}
-}
-```
 
----
-
-## 🎓 Support
-
-For questions or issues:
-1. Check this README first
-2. Run `validate_setup.py` to diagnose problems
-3. Check [nnU-Net documentation](https://github.com/MIC-DKFZ/nnUNet/tree/master/documentation)
-
----
-
-**Ready to start? Run:** `python setup_nnunet.py` 🚀
