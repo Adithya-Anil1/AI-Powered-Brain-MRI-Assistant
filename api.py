@@ -34,7 +34,7 @@ app = FastAPI(title="Brain MRI Analysis API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8501"],
+    allow_origins=["http://localhost:8501", "http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -233,6 +233,7 @@ def _run_pipeline(job_id: str, case_folder: Path, log_path: Path):
                     str(BASE_DIR / "run_full_pipeline.py"),
                     str(case_folder),   # positional arg — matches main()'s 'case_folder'
                 ],
+                stdin=subprocess.DEVNULL,
                 stdout=log_fh,
                 stderr=subprocess.STDOUT,
                 cwd=str(BASE_DIR),
@@ -379,6 +380,22 @@ async def report_pdf(job_id: str):
         media_type="application/pdf",
         filename="radiology_report.pdf",
     )
+
+
+# GET /api/report/{job_id}/pdf_path -----------------------------------------
+
+@app.get("/api/report/{job_id}/pdf_path")
+async def report_pdf_path(job_id: str):
+    """Return the absolute filesystem path to the generated PDF report."""
+
+    if not _job_exists(job_id):
+        raise HTTPException(status_code=404, detail="Job not found.")
+
+    pdf_path = get_output_dir(job_id) / "radiology_report.pdf"
+    if not pdf_path.exists():
+        raise HTTPException(status_code=404, detail="PDF report not generated yet.")
+
+    return {"pdf_path": str(pdf_path.resolve())}
 
 
 # GET /api/metrics/{job_id} ------------------------------------------------
