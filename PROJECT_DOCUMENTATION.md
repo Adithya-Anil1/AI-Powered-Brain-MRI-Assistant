@@ -686,7 +686,7 @@ python run_all.py --input <mri_folder> --segmentation <seg.nii.gz> --output <out
 
 ### Medium Term
 1. **GPU Support**: Enable CUDA for 10-20x faster inference
-2. **Web Interface**: Flask/Streamlit app for easy deployment
+2. **Web Interface**: React frontend with FastAPI backend
 3. **LLM Integration**: Direct integration with GPT-4/Claude for report generation
 4. **Batch Processing**: Process multiple cases in sequence
 

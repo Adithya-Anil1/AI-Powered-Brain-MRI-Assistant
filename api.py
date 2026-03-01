@@ -34,7 +34,7 @@ app = FastAPI(title="Brain MRI Analysis API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8501", "http://localhost:5173"],
+    allow_origins=["http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -485,3 +485,11 @@ async def chat(job_id: str, body: ChatRequest):
         )
 
     return {"answer": answer}
+
+
+# ---------------------------------------------------------------------------
+# Run server
+# ---------------------------------------------------------------------------
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -333,7 +333,7 @@ export default function App() {
           <div style={{ display:"flex", alignItems:"center", gap:10 }}>
             <span style={{ fontSize:"1.4rem" }}>🧠</span>
             <span style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:"1.1rem", color:"#f8fafc", letterSpacing:"-.1px" }}>
-              NeuroMind AI
+              AI Powered Brain MRI Assistant 
             </span>
           </div>
 
@@ -539,7 +539,7 @@ export default function App() {
                 <div style={panelHeader}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                    <span style={{ fontFamily:"'Inter',sans-serif", fontWeight:600, fontSize:".95rem", color:C.txts, textTransform: "uppercase", letterSpacing: "1px" }}>AI Assistant</span>
+                    <span style={{ fontFamily:"'Inter',sans-serif", fontWeight:600, fontSize:".95rem", color:C.txts, textTransform: "uppercase", letterSpacing: "1px" }}>RAG Assistant</span>
                   </div>
                 </div>
 
