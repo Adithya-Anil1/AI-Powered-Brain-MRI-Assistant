@@ -5,20 +5,14 @@ Generate MRI Radiology Report using Template-Driven Approach
 This script uses a TEMPLATE-DRIVEN method where:
 1. A rigid, human-written template defines the report structure
 2. Rule-based sentence generators fill each placeholder
-3. Gemini API is optionally used ONLY for edge cases or refinements
+3. All slot values are deterministically derived from structured facts
 
-The template is 100% controlled - the LLM cannot modify structure.
+The template is 100% controlled - no external model can modify structure.
 
 Usage:
     python generate_report_gemini.py <case_folder>
     python generate_report_gemini.py results/BraTS-GLI-00009-000
-    python generate_report_gemini.py results/BraTS-GLI-00009-000 --use-llm  # Enable LLM refinement
 """
-
-# Suppress deprecation warnings from google packages before importing them
-import warnings
-warnings.filterwarnings("ignore", category=FutureWarning, module="google")
-warnings.filterwarnings("ignore", message=".*google.generativeai.*")
 
 import os
 import sys
@@ -26,20 +20,6 @@ import json
 import argparse
 from pathlib import Path
 from datetime import datetime
-
-# Load environment variables from .env file if it exists
-def load_env_file():
-    """Load environment variables from .env file."""
-    env_path = Path(__file__).parent / ".env"
-    if env_path.exists():
-        with open(env_path, 'r') as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith('#') and '=' in line:
-                    key, value = line.split('=', 1)
-                    os.environ.setdefault(key.strip(), value.strip())
-
-load_env_file()
 
 # Import template-based report generation
 from report_templates import (
@@ -51,65 +31,7 @@ from report_templates import (
     SlotValidator,
     FactExtractor,
     FactsToSlotMapper,
-    ConstrainedLLMFiller,
 )
-
-# ============================================================================
-# GEMINI API KEY CONFIGURATION
-# ============================================================================
-# The API key is loaded from environment variable or .env file
-# To set up:
-#   1. Create a .env file in the project root with: GEMINI_API_KEY=your_key_here
-#   2. Or set the environment variable: export GEMINI_API_KEY=your_key_here
-# ============================================================================
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
-# ============================================================================
-
-# Flag for Gemini availability
-GEMINI_AVAILABLE = False
-try:
-    # Suppress the deprecation warning during import
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=FutureWarning)
-        warnings.filterwarnings("ignore", category=DeprecationWarning)
-        import google.generativeai as genai
-    GEMINI_AVAILABLE = True
-except ImportError:
-    pass  # Gemini not required for template-based generation
-
-
-# ============================================================================
-# LLM REFINEMENT PROMPT (only used with --use-llm flag)
-# ============================================================================
-# This prompt is used ONLY for optional refinement of the template-generated report.
-# The LLM is NOT allowed to change the structure - only improve phrasing.
-
-LLM_REFINEMENT_PROMPT = """You are a medical editor reviewing an automatically generated radiology report.
-
-Your task is to REFINE the report for better readability while following these STRICT RULES:
-
-WHAT YOU CAN DO:
-- Improve sentence flow and readability
-- Fix grammatical issues
-- Make phrasing more natural and clinical
-
-WHAT YOU CANNOT DO:
-- Add new information not present in the original
-- Remove any information from the original
-- Change the report structure or section order
-- Add new sections or headings
-- Change any measurements or values
-- Add diagnostic conclusions not present in the original
-- Modify the disclaimer
-
-The template structure is FIXED. Your refinements must preserve:
-1. All section headings exactly as they appear
-2. All measurements and values
-3. All clinical findings
-4. The exact disclaimer text
-5. The overall report structure
-
-Return ONLY the refined report text, nothing else."""
 
 # Clinically significant thresholds (now handled in report_templates.py)
 MIDLINE_SHIFT_THRESHOLD_MM = 2.0
@@ -133,53 +55,13 @@ def generate_template_report(summary: dict) -> tuple:
     Pipeline:
         Step 1: Rigid template (MRI_BRAIN_TEMPLATE) - human-written
         Step 2: Slot specifications with constraints
-        Step 3: FactExtractor - model outputs → structured facts (NO LLM)
+        Step 3: FactExtractor - model outputs → structured facts
         Step 4: FactsToSlotMapper - facts → slot values (deterministic)
     
     Returns:
         Tuple of (report_string, validation_log, extracted_facts)
     """
     return generate_report_from_summary(summary, validate=True)
-
-
-def refine_with_llm(report: str, api_key: str) -> str:
-    """
-    Optionally refine the template-generated report using Gemini.
-    
-    This is ONLY for improving readability - not changing content.
-    The LLM cannot modify the structure or add new information.
-    """
-    if not GEMINI_AVAILABLE:
-        print("Warning: Gemini not available for refinement. Using template output.")
-        return report
-    
-    # Configure Gemini
-    genai.configure(api_key=api_key)
-    
-    # Create the model
-    model = genai.GenerativeModel(
-        model_name="gemini-2.5-flash",
-        system_instruction=LLM_REFINEMENT_PROMPT
-    )
-    
-    prompt = f"""Please refine the following radiology report for better readability.
-Remember: DO NOT change the structure, add information, or modify any values.
-
-REPORT TO REFINE:
-{report}
-
-Return only the refined report:"""
-    
-    print("Refining report with Gemini API (optional)...")
-    response = model.generate_content(
-        prompt,
-        generation_config=genai.types.GenerationConfig(
-            temperature=0.2,  # Very low temperature for minimal changes
-            max_output_tokens=4096,
-        )
-    )
-    
-    return response.text
 
 
 def save_report(report: str, case_folder: Path, case_id: str, method: str = "template"):
@@ -217,17 +99,6 @@ def main():
         type=str,
         help="Path to the case results folder (e.g., results/BraTS-GLI-00009-000)"
     )
-    parser.add_argument(
-        "--use-llm",
-        action="store_true",
-        help="Optionally refine report with Gemini LLM (not required)"
-    )
-    parser.add_argument(
-        "--api-key",
-        type=str,
-        default=None,
-        help="Gemini API key (only needed with --use-llm)"
-    )
     
     args = parser.parse_args()
     
@@ -247,7 +118,7 @@ def main():
     print("=" * 70)
     print(f"\nCase ID: {case_id}")
     print(f"Case folder: {case_folder}")
-    print(f"Method: Template-driven (LLM refinement: {'enabled' if args.use_llm else 'disabled'})")
+    print(f"Method: Template-driven (deterministic)")
     
     # Load summary
     print("\nLoading analysis summary...")
@@ -266,7 +137,7 @@ def main():
     print("-" * 50)
     print("Step 1: Rigid Template (human-written)")
     print("Step 2: Slot Specifications (constraints)")
-    print("Step 3: Fact Extraction (deterministic, no LLM)")
+    print("Step 3: Fact Extraction (deterministic)")
     print("Step 4: Facts -> Slot Values (deterministic)")
     print("-" * 50)
     
@@ -289,25 +160,6 @@ def main():
             print(f"  - {entry['slot']}: {entry['violations']}")
     else:
         print("\n[OK] All slots passed validation")
-    
-    # Optionally refine with LLM
-    if args.use_llm:
-        api_key = args.api_key or os.environ.get("GEMINI_API_KEY") or GEMINI_API_KEY
-        
-        if api_key == "YOUR_API_KEY_HERE" or not api_key:
-            print("\nWarning: No API key provided for LLM refinement.")
-            print("Using template output without refinement.")
-        elif not GEMINI_AVAILABLE:
-            print("\nWarning: google-generativeai not installed.")
-            print("Install with: pip install google-generativeai")
-            print("Using template output without refinement.")
-        else:
-            try:
-                report = refine_with_llm(report, api_key)
-                method = "template+llm"
-            except Exception as e:
-                print(f"\nWarning: LLM refinement failed: {e}")
-                print("Using template output without refinement.")
     
     # Save report
     print("\nSaving report...")

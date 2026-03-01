@@ -68,7 +68,7 @@ Reports are generated using a **template-constrained architecture**, not free-fo
 - Fixed radiology report structure  
 - Rule-based slot filling from validated measurements  
 - Strict prohibition of diagnostic claims  
-- Optional Gemini-based linguistic refinement (structure locked)  
+- Fully deterministic, template-based report generation  
 
 Outputs include:
 

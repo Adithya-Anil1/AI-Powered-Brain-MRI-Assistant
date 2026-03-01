@@ -3,11 +3,11 @@
 Report Templates for MRI Brain Tumor Analysis
 
 This module contains human-written, rigid templates for radiology reports.
-The LLM fills in specific fields but CANNOT modify the template structure.
+All slot values are filled deterministically from structured facts.
 
 Template Philosophy:
 - Templates are 100% human-written and clinically validated
-- LLM only provides content for designated placeholder fields
+- Rule-based sentence generators fill each placeholder
 - All formatting, section order, and standard language is fixed
 - Ensures consistency, compliance, and clinical appropriateness
 
@@ -129,7 +129,7 @@ FINDINGS_PARAGRAPH_STRUCTURE = {
 SLOT_SPECIFICATIONS = {
     "clinical_indication": {
         "allowed_templates": [
-            "Clinical indication not provided.",
+            "Evaluation of suspected intracranial neoplasm.",
             "{clinical_history}",
             "{clinical_history}. Presenting symptoms: {symptoms}.",
             "Presenting symptoms: {symptoms}.",
@@ -137,7 +137,7 @@ SLOT_SPECIFICATIONS = {
         ],
         "forbidden_terms": [],
         "max_length": 500,
-        "fallback": "Clinical indication not provided.",
+        "fallback": "Evaluation of suspected intracranial neoplasm.",
         "section": "CLINICAL_INDICATION",
     },
     
@@ -895,188 +895,6 @@ class FactExtractor:
 
 
 # ============================================================================
-# STEP 4: CONSTRAINED LLM SLOT FILLER (Optional)
-# ============================================================================
-# When LLM is used, it ONLY selects from allowed values.
-# Output is validated; invalid = reject and retry.
-# ============================================================================
-
-class ConstrainedLLMFiller:
-    """
-    Use LLM ONLY for constrained slot filling.
-    
-    The LLM can only:
-    1. Select from a list of allowed values
-    2. Fill placeholders in pre-approved templates
-    
-    The LLM CANNOT:
-    1. Generate free-form text
-    2. Add medical interpretation
-    3. Use forbidden terms
-    """
-    
-    MAX_RETRIES = 3
-    
-    def __init__(self, api_key: str = None):
-        """
-        Initialize with optional API key.
-        
-        Args:
-            api_key: Gemini API key (optional - falls back to rules if not provided)
-        """
-        self.api_key = api_key
-        self.model = None
-        self._setup_model()
-    
-    def _setup_model(self):
-        """Set up the Gemini model if available."""
-        if not self.api_key:
-            return
-        
-        try:
-            import google.generativeai as genai
-            genai.configure(api_key=self.api_key)
-            self.model = genai.GenerativeModel(
-                model_name="gemini-2.5-flash",
-                generation_config={
-                    'temperature': 0.0,  # Deterministic
-                    'max_output_tokens': 50,  # Very short - just the value
-                }
-            )
-        except ImportError:
-            self.model = None
-    
-    def fill_slot_value(
-        self, 
-        slot_name: str, 
-        field_name: str, 
-        context: dict,
-        allowed_values: List[str]
-    ) -> str:
-        """
-        Use LLM to select the best value from allowed options.
-        
-        Args:
-            slot_name: Name of the slot being filled
-            field_name: Name of the specific field (e.g., 'edema_degree')
-            context: Relevant facts/context for decision
-            allowed_values: List of allowed values to choose from
-            
-        Returns:
-            Selected value from allowed_values (or first value if LLM unavailable)
-        """
-        if not self.model or not allowed_values:
-            # Fallback: use first allowed value or empty string
-            return allowed_values[0] if allowed_values else ''
-        
-        # Build constrained prompt
-        prompt = self._build_constrained_prompt(field_name, context, allowed_values)
-        
-        for attempt in range(self.MAX_RETRIES):
-            try:
-                response = self.model.generate_content(prompt)
-                selected = response.text.strip().lower()
-                
-                # Validate response is in allowed values
-                for allowed in allowed_values:
-                    if allowed.lower() == selected or allowed.lower() in selected:
-                        return allowed  # Return properly cased version
-                
-                # Not found - retry with stricter prompt
-                prompt = self._build_retry_prompt(field_name, allowed_values, selected)
-                
-            except Exception as e:
-                print(f"LLM error on attempt {attempt + 1}: {e}")
-                continue
-        
-        # All retries failed - use deterministic fallback
-        return self._deterministic_fallback(field_name, context, allowed_values)
-    
-    def _build_constrained_prompt(
-        self, 
-        field_name: str, 
-        context: dict, 
-        allowed_values: List[str]
-    ) -> str:
-        """Build a strictly constrained prompt for value selection."""
-        values_str = ', '.join(allowed_values)
-        context_str = '\n'.join(f"  {k}: {v}" for k, v in context.items())
-        
-        return f"""STRICT INSTRUCTION: Select exactly ONE value from the allowed list.
-
-TASK: Choose the best value for "{field_name}"
-
-ALLOWED VALUES (choose ONLY from these):
-{values_str}
-
-CONTEXT:
-{context_str}
-
-RULES:
-- Output ONLY the selected value, nothing else
-- Do NOT add explanation
-- Do NOT add punctuation
-- The output must EXACTLY match one of the allowed values
-
-YOUR SELECTION:"""
-
-    def _build_retry_prompt(
-        self, 
-        field_name: str, 
-        allowed_values: List[str], 
-        invalid_response: str
-    ) -> str:
-        """Build retry prompt after invalid response."""
-        values_str = ', '.join(allowed_values)
-        
-        return f"""ERROR: Your previous response "{invalid_response}" is not valid.
-
-You MUST select EXACTLY ONE of these values:
-{values_str}
-
-Output ONLY the value. No other text.
-
-YOUR SELECTION:"""
-
-    def _deterministic_fallback(
-        self, 
-        field_name: str, 
-        context: dict, 
-        allowed_values: List[str]
-    ) -> str:
-        """
-        Deterministic fallback when LLM fails.
-        Uses simple rules based on context.
-        """
-        if not allowed_values:
-            return ''
-        
-        # Field-specific fallback logic
-        if field_name == 'edema_degree':
-            edema_vol = context.get('edema_volume_cm3', 0)
-            if edema_vol < 5:
-                return 'Minimal'
-            elif edema_vol < 15:
-                return 'Moderate'
-            elif edema_vol < 30:
-                return 'Significant'
-            else:
-                return 'Extensive'
-        
-        elif field_name == 'hemisphere':
-            return context.get('hemisphere', allowed_values[0])
-        
-        elif field_name == 'distribution':
-            count = context.get('lesion_count', 1)
-            if count > 1:
-                return 'multifocal'
-            return 'focal'
-        
-        # Default: return first allowed value
-        return allowed_values[0]
-
-
-# ============================================================================
 # FACTS TO SLOT VALUES MAPPER (Deterministic)
 # ============================================================================
 
@@ -1132,8 +950,8 @@ class FactsToSlotMapper:
     def _map_clinical_indication(self) -> str:
         """Map to clinical indication slot."""
         if self.facts['clinical_history_provided']:
-            return self.facts.get('clinical_history', 'Clinical indication not provided.')
-        return "Clinical indication not provided."
+            return self.facts.get('clinical_history', 'Evaluation of suspected intracranial neoplasm.')
+        return "Evaluation of suspected intracranial neoplasm."
     
     def _map_sequences(self) -> str:
         """Map sequences to readable list."""
@@ -1362,7 +1180,7 @@ class FactsToSlotMapper:
 # MASTER TEMPLATE - MRI BRAIN WITH CONTRAST
 # ============================================================================
 # This is the rigid, human-written template structure.
-# The LLM cannot modify this - it can only fill in the placeholders.
+# Only rule-based slot filling is applied to the placeholders.
 #
 # Issue #4: Paragraph grouping for natural flow
 # - Lesion description block (count + dominant lesion)
@@ -1428,7 +1246,7 @@ class SentenceGenerators:
         elif presenting_symptoms != '<not provided>':
             return f"Presenting symptoms: {presenting_symptoms}"
         else:
-            return "Clinical indication not provided."
+            return "Evaluation of suspected intracranial neoplasm."
     
     @staticmethod
     def generate_sequences_list(technique: dict) -> str:
@@ -1726,25 +1544,23 @@ class SentenceGenerators:
 
 class ReportTemplateFiller:
     """
-    Fills the report template using the new 4-step pipeline:
+    Fills the report template using the deterministic pipeline:
     
     Step 1: Rigid Template (MRI_BRAIN_TEMPLATE)
     Step 2: Slot Specifications with constraints (SLOT_SPECIFICATIONS)
-    Step 3: FactExtractor - Convert model outputs to structured facts (NO LLM)
+    Step 3: FactExtractor - Convert model outputs to structured facts
     Step 4: FactsToSlotMapper - Map facts to slot values (deterministic)
     
     All generated content is validated against slot specifications.
     """
     
-    def __init__(self, summary: dict, validate: bool = True, use_llm: bool = False, api_key: str = None):
+    def __init__(self, summary: dict, validate: bool = True):
         """
-        Initialize with the LLM-ready summary data.
+        Initialize with the summary data.
         
         Args:
             summary: The llm_ready_summary.json data as a dictionary
             validate: Whether to validate generated content against slot specs
-            use_llm: Whether to use constrained LLM for ambiguous cases (Step 4)
-            api_key: API key for LLM (only used if use_llm=True)
         """
         self.summary = summary
         self.validator = SlotValidator()
@@ -1754,11 +1570,6 @@ class ReportTemplateFiller:
         # Step 3: Extract structured facts
         self.fact_extractor = FactExtractor(summary)
         self.facts = self.fact_extractor.extract_facts()
-        
-        # Step 4: Optional constrained LLM filler
-        self.llm_filler = None
-        if use_llm and api_key:
-            self.llm_filler = ConstrainedLLMFiller(api_key)
     
     def _validate_and_sanitize(self, slot_name: str, content: str) -> str:
         """
@@ -1781,15 +1592,15 @@ class ReportTemplateFiller:
     
     def fill_template(self, template: str = None) -> str:
         """
-        Fill all placeholders in the template using the 6-step pipeline.
+        Fill all placeholders in the template using the deterministic pipeline.
         
         COMPLETE PIPELINE:
         Step 1: Rigid Template (MRI_BRAIN_TEMPLATE) - human-written
         Step 2: Slot Specifications with constraints
-        Step 3: FactExtractor - model outputs → structured facts (NO LLM)
+        Step 3: FactExtractor - model outputs → structured facts
         Step 4: FactsToSlotMapper - facts → slot values (deterministic)
         Step 5: Validation Layer - mandatory checks, fallback on failure
-        Step 6: Assemble Final Report - zero creativity, deterministic
+        Step 6: Assemble Final Report - deterministic
         
         Args:
             template: The template string to fill (defaults to MRI_BRAIN_TEMPLATE)
@@ -1804,7 +1615,7 @@ class ReportTemplateFiller:
         self.validation_log = []
         
         # =====================================================================
-        # STEP 4: Map facts to slot values (deterministic, no LLM)
+        # STEP 4: Map facts to slot values (deterministic)
         # =====================================================================
         mapper = FactsToSlotMapper(self.facts)
         raw_values = mapper.map_to_slot_values()
@@ -1818,8 +1629,8 @@ class ReportTemplateFiller:
             field_values[slot_name] = self._validate_and_sanitize(slot_name, content)
         
         # =====================================================================
-        # STEP 6: Assemble Final Report (ZERO CREATIVITY)
-        # Simple format() call - no LLM, no creativity, deterministic output
+        # STEP 6: Assemble Final Report (DETERMINISTIC)
+        # Simple format() call - deterministic output
         # =====================================================================
         report = template.format(**field_values)
         
