@@ -1340,6 +1340,7 @@ class SentenceGenerators:
         elif 'cortical' in depth:
             depth_phrase = "cortical and subcortical "
         
+        
         # Use correct article (a/an) based on depth phrase
         article = "an" if depth_phrase.startswith(('a', 'e', 'i', 'o', 'u')) else "a"
         if not depth_phrase:
