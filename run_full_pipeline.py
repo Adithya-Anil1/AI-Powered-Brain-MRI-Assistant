@@ -510,7 +510,7 @@ def run_pipeline(case_folder):
         # =====================================================================
         # STEP 2: Run segmentation
         # =====================================================================
-        print("STAGE:segmenting")
+        print("STAGE:segmenting", flush=True)
         print_step(2, "RUNNING SEGMENTATION (BraTS 2021 KAIST Model)")
 
         results_folder.mkdir(parents=True, exist_ok=True)
@@ -549,7 +549,7 @@ def run_pipeline(case_folder):
         # =====================================================================
         # STEP 5: Feature extraction
         # =====================================================================
-        print("STAGE:extracting")
+        print("STAGE:extracting", flush=True)
         print_step(5, "RUNNING FEATURE EXTRACTION PIPELINE")
 
         feature_output = results_folder / "feature_extraction"
@@ -561,7 +561,7 @@ def run_pipeline(case_folder):
         # =====================================================================
         # STEP 6: Generate radiology report
         # =====================================================================
-        print("STAGE:generating")
+        print("STAGE:generating", flush=True)
         print_step(6, "GENERATING RADIOLOGY REPORT")
 
         report_output = run_report_generation(results_folder)
@@ -574,7 +574,7 @@ def run_pipeline(case_folder):
         # =====================================================================
         # STEP 7: Generate PDF report
         # =====================================================================
-        print("STAGE:exporting")
+        print("STAGE:exporting", flush=True)
         print_step(7, "GENERATING PROFESSIONAL PDF REPORT")
 
         pdf_report = None
@@ -655,13 +655,13 @@ def run_pipeline(case_folder):
 
         print(f"\n📄 Pipeline summary saved: {summary_file}")
 
-        print("STAGE:done")
+        print("STAGE:done", flush=True)
 
         return summary
 
     except Exception as e:
-        print("STAGE:error")
-        print(f"ERROR:{str(e)}")
+        print("STAGE:error", flush=True)
+        print(f"ERROR:{str(e)}", flush=True)
         raise
 
 
@@ -711,16 +711,16 @@ Output:
         summary = run_pipeline(args.case_folder)
         sys.exit(0)
     except FileNotFoundError as e:
-        print(f"\n❌ Error: {e}")
+        print(f"\nError: {e}", flush=True)
         sys.exit(1)
     except RuntimeError as e:
-        print(f"\n❌ Error: {e}")
+        print(f"\nError: {e}", flush=True)
         sys.exit(2)
     except KeyboardInterrupt:
-        print(f"\n\n⚠ Pipeline interrupted by user")
+        print(f"\n\nPipeline interrupted by user", flush=True)
         sys.exit(130)
     except Exception as e:
-        print(f"\n❌ Unexpected error: {e}")
+        print(f"\nUnexpected error: {e}", flush=True)
         import traceback
         traceback.print_exc()
         sys.exit(1)

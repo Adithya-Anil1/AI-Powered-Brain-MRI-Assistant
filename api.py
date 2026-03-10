@@ -225,11 +225,15 @@ def _run_pipeline(job_id: str, case_folder: Path, log_path: Path):
         child_env = os.environ.copy()
         child_env["PYTHONIOENCODING"] = "utf-8"
         child_env["PYTHONUTF8"] = "1"
+        # Disable output buffering so STAGE markers appear in the log
+        # immediately (Python fully buffers stdout when writing to a file).
+        child_env["PYTHONUNBUFFERED"] = "1"
 
         with open(log_path, "w", encoding="utf-8") as log_fh:
             proc = subprocess.run(
                 [
                     sys.executable,
+                    "-u",              # unbuffered stdout/stderr
                     str(BASE_DIR / "run_full_pipeline.py"),
                     str(case_folder),   # positional arg — matches main()'s 'case_folder'
                 ],
@@ -338,6 +342,23 @@ async def status(job_id: str):
 
     if not _job_exists(job_id):
         raise HTTPException(status_code=404, detail="Job not found.")
+
+    # Check in-memory store first — it has the authoritative final status
+    # set by _run_pipeline (handles cases where log is incomplete).
+    with JOB_LOCK:
+        mem = JOB_STORE.get(job_id, {})
+        mem_status = mem.get("status")
+        mem_stage = mem.get("stage")
+
+    if mem_status in ("done", "error"):
+        log_path = SESSIONS_DIR / job_id / "pipeline.log"
+        log_result = _parse_log(log_path)
+        # Prefer the in-memory final status over possibly-incomplete log
+        log_result["status"] = mem_status
+        log_result["stage"] = mem_stage
+        if mem_status == "done":
+            log_result["progress_pct"] = 100
+        return log_result
 
     log_path = SESSIONS_DIR / job_id / "pipeline.log"
     return _parse_log(log_path)

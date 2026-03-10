@@ -215,13 +215,15 @@ def analyze_parenchyma(t1_data, t2_data, flair_data, brain_mask, tumor_mask, vox
     ventricle_dilated = binary_dilation(ventricle_mask, iterations=10)
     periventricular = ventricle_dilated & normal_brain & ~ventricle_mask
     
+    # Cortical mask (defined here so it's always available for gray-white differentiation)
+    cortical_mask = normal_brain & (brain_dist < np.percentile(brain_dist[brain_mask], 40))
+
     # FLAIR hyperintensities in periventricular region (possible white matter disease)
     if periventricular.sum() > 0:
         pv_flair = flair_data[periventricular]
         pv_flair_mean = pv_flair.mean()
         
         # Compare to cortical GM FLAIR
-        cortical_mask = normal_brain & (brain_dist < np.percentile(brain_dist[brain_mask], 40))
         cortical_flair = flair_data[cortical_mask]
         cortical_flair_mean = cortical_flair.mean()
         

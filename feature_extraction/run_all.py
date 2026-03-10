@@ -443,7 +443,11 @@ def run_all_steps(input_folder, segmentation_path, output_folder):
     print("RUNNING STEP 6: Normal Structures Assessment")
     print("=" * 70)
     step6_output = output_folder / "step6_normal_structures.json"
-    step6_results = analyze_normal_structures(input_folder, segmentation_path, step6_output)
+    try:
+        step6_results = analyze_normal_structures(input_folder, segmentation_path, step6_output)
+    except Exception as e:
+        print(f"  ⚠ Step 6 failed: {e}")
+        step6_results = {'assessment': 'Unable to assess', 'note': f'Step 6 error: {e}'}
     
     # Compile all results
     print("\n" + "=" * 70)
