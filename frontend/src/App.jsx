@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import ReactMarkdown from "react-markdown";
 
 const API_BASE = "http://localhost:8000";
 
@@ -558,7 +559,13 @@ export default function App() {
                       <div style={{ alignSelf:"flex-start", maxWidth:"94%", display:"flex", gap:12, alignItems:"flex-start" }}>
                         <div style={{ width:28, height:28, borderRadius:"50%", background:C.accentDim, border:`1px solid rgba(59, 130, 246, 0.3)`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:".8rem", flexShrink:0, marginTop:2 }}>🧠</div>
                         <div style={{ background:C.cardB, border:`1px solid ${C.border}`, borderRadius:"0px 12px 12px 12px", padding:"12px 16px", fontSize:".85rem", color:C.txts, lineHeight:1.68 }}>
-                          {item.a}
+                          <ReactMarkdown components={{
+                            ul: ({children}) => <ul style={{margin:"6px 0", paddingLeft:"1.2em"}}>{children}</ul>,
+                            ol: ({children}) => <ol style={{margin:"6px 0", paddingLeft:"1.2em"}}>{children}</ol>,
+                            li: ({children}) => <li style={{marginBottom:"4px"}}>{children}</li>,
+                            p: ({children}) => <p style={{margin:"4px 0"}}>{children}</p>,
+                            strong: ({children}) => <strong style={{fontWeight:600, color:"#e2e8f0"}}>{children}</strong>,
+                          }}>{item.a}</ReactMarkdown>
                         </div>
                       </div>
                     </div>

@@ -445,7 +445,8 @@ def call_gemini(prompt: str) -> str:
     genai.configure(api_key=api_key)
 
     # Use gemini-2.5-flash with low temperature for factual responses
-    model = genai.GenerativeModel(model_name="gemini-2.5-flash")
+    model = genai.GenerativeModel(model_name="gemini-2.5-flash")    .\venv310\Scripts\activate
+    uvicorn api:app --host 0.0.0.0 --port 8000 --reload
     generation_config = genai.types.GenerationConfig(
         temperature=0.1,       # Low temperature — factual, deterministic
         max_output_tokens=2048, # Enough for structured answers with bullet lists
